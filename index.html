@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#9b347f">
+  <meta name="description" content="A gentle pregnancy week and due-date tracker.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <title>Bloom Pregnancy Tracker</title>
+  <style>
+    :root{--pink:#e84f91;--plum:#853581;--ink:#2d263c;--muted:#746e82;--bg:#fff7fb;--line:#f0dce8}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .wrap{max-width:760px;margin:auto;padding:18px 15px 40px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:9px;font-size:20px;font-weight:800;color:var(--plum)}
+    .logo{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#ffe1ef;font-size:23px}
+    .panel,.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 8px 25px #6d28500b}
+    h1{font-size:26px;margin:8px 0}h2{font-size:21px;margin:0 0 12px}h3{margin:0 0 10px;font-size:16px}
+    .muted{color:var(--muted);line-height:1.5}.small{font-size:12px}
+    .field{margin:14px 0}.field label{display:block;font-size:14px;font-weight:700;margin-bottom:7px}
+    input,textarea{width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;background:#fffafd;color:var(--ink);font:inherit}
+    button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:12px 15px;background:linear-gradient(120deg,var(--pink),var(--plum));color:#fff;font-weight:700}
+    button.secondary{background:#f8e5f0;color:var(--plum)}button.link{background:transparent;color:var(--plum);padding:5px}
+    .full{width:100%}.hidden{display:none!important}.error{color:#b42355}
+    .hero{background:linear-gradient(120deg,#ffe5f0,#f3e6ff);border-radius:24px;padding:22px;display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:15px}
+    .week{font-size:43px;font-weight:850;color:var(--plum);white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+    .big{font-size:21px;font-weight:800;color:var(--plum);overflow-wrap:anywhere}.progress{height:9px;background:#f5e2ee;border-radius:20px;overflow:hidden;margin:13px 0}.progress span{height:100%;display:block;background:linear-gradient(90deg,var(--pink),var(--plum))}
+    .nav{display:flex;gap:7px;overflow-x:auto;margin:16px 0;padding-bottom:2px}.nav button{white-space:nowrap;background:#fff;color:var(--plum);border:1px solid var(--line);padding:10px 12px}.nav button.active{background:var(--plum);color:white}
+    .note{padding:14px;background:#fff5fa;border-radius:12px;margin:10px 0;border:1px solid var(--line)}
+    .footer{font-size:12px;color:var(--muted);line-height:1.55;margin-top:18px}
+    @media(max-width:480px){.wrap{padding:13px 11px 30px}.panel,.card{padding:16px}.hero{align-items:flex-start;flex-direction:column}.week{font-size:38px}.grid{grid-template-columns:1fr}header .brand{font-size:17px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="logo">♡</span> Bloom Pregnancy</div>
+    <button id="resetBtn" class="secondary hidden" type="button">Reset profile</button>
+  </header>
+
+  <section id="setupView" class="panel">
+    <div class="logo">🤰</div>
+    <h1>Welcome to your journey</h1>
+    <p class="muted">Set up a local profile to estimate your pregnancy week and due date. No account or password is required in this demo.</p>
+    <form id="setupForm">
+      <div class="field"><label for="name">Name (optional)</label><input id="name" maxlength="70" placeholder="What should we call you?"></div>
+      <div class="field"><label for="lmp">First day of your last menstrual period</label><input id="lmp" type="date" required></div>
+      <button class="full" type="submit">Start tracking</button>
+    </form>
+    <p class="footer">Your profile and notes stay in this browser on this device. This is not a secure medical record or cloud account. Avoid using a shared device.</p>
+  </section>
+
+  <main id="appView" class="hidden">
+    <section class="hero">
+      <div><p id="greeting" class="muted">Your pregnancy journey</p><h1>Your weekly overview</h1><p id="trimester" class="muted"></p></div>
+      <div><div id="weekNumber" class="week">—</div><div class="muted">weeks + days</div></div>
+    </section>
+    <div class="grid">
+      <section class="card"><h3>Estimated due date</h3><div id="dueDate" class="big">—</div><p class="muted small">Estimated from a 280-day pregnancy.</p></section>
+      <section class="card"><h3>Time to due date</h3><div id="daysLeft" class="big">—</div><p class="muted small">Calendar estimate only.</p></section>
+      <section class="card" style="grid-column:1/-1"><h3>Pregnancy progress</h3><div id="progressText" class="big">—</div><div class="progress"><span id="progressBar" style="width:0%"></span></div><p class="muted small">40 weeks is a common estimate; actual timing varies.</p></section>
+    </div>
+    <nav class="nav" aria-label="Tracker sections">
+      <button class="active" data-tab="overview">Overview</button><button data-tab="development">Baby development</button><button data-tab="notes">My notes</button><button data-tab="settings">Settings</button>
+    </nav>
+    <section id="tab-overview" class="panel">
+      <h2>This week's guide</h2><p id="weekGuide" class="muted"></p>
+      <div class="note">💗 <strong>Gentle reminder</strong><br>Every pregnancy is different. Ask your healthcare professional for advice tailored to you, and seek prompt medical care for worrying symptoms.</div>
+    </section>
+    <section id="tab-development" class="panel hidden">
+      <h2>Baby development</h2><p id="developmentText" class="muted"></p>
+      <p class="muted small">General educational information only; milestones vary.</p>
+    </section>
+    <section id="tab-notes" class="panel hidden">
+      <h2>My notes</h2><p class="muted">Save a reminder or question for your next appointment on this device.</p>
+      <div class="field"><label for="notes">Personal note</label><textarea id="notes" rows="5" maxlength="5000" placeholder="Write a note..."></textarea></div>
+      <button id="saveNotes" type="button">Save note</button> <span id="notesStatus" class="muted small"></span>
+    </section>
+    <section id="tab-settings" class="panel hidden">
+      <h2>Tracker settings</h2>
+      <div class="field"><label for="updateName">Name (optional)</label><input id="updateName" maxlength="70"></div>
+      <div class="field"><label for="updateLmp">First day of last menstrual period</label><input id="updateLmp" type="date" required></div>
+      <button id="saveSettings" type="button">Update tracker</button>
+    </section>
+    <p class="footer">Pregnancy weeks and due dates are estimates, not a diagnosis. A healthcare professional can confirm gestational age and due date. This app does not provide emergency or personalized medical care.</p>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const PROFILE_KEY="bloom_pwa_profile_v1";
+const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
+$("lmp").max=todayISO();$("updateLmp").max=todayISO();
+function loadProfile(){try{return JSON.parse(localStorage.getItem(PROFILE_KEY)||"null")}catch{return null}}
+function saveProfile(p){localStorage.setItem(PROFILE_KEY,JSON.stringify(p))}
+function parseDate(value){return new Date(value+"T00:00:00")}
+function formatDate(d){return d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})}
+function validLmp(value){return !!value && value<=todayISO() && !Number.isNaN(parseDate(value).getTime())}
+function showApp(){
+  const p=loadProfile();if(!p)return;
+  $("setupView").classList.add("hidden");$("appView").classList.remove("hidden");$("resetBtn").classList.remove("hidden");
+  $("greeting").textContent=p.name?`Hello, ${p.name} 💗`:"Your pregnancy journey 💗";
+  $("updateName").value=p.name||"";$("updateLmp").value=p.lmp;$("notes").value=p.notes||"";
+  refresh();
+}
+function refresh(){
+  const p=loadProfile();if(!p)return;
+  const now=new Date();now.setHours(0,0,0,0);
+  const lmp=parseDate(p.lmp);const days=Math.max(0,Math.floor((now-lmp)/86400000));
+  const weeks=Math.floor(days/7),extra=days%7,week=Math.min(42,weeks+1);
+  const due=new Date(lmp);due.setDate(due.getDate()+280);
+  $("weekNumber").textContent=`${weeks}w ${extra}d`;
+  $("dueDate").textContent=formatDate(due);
+  $("daysLeft").textContent=Math.ceil((due-now)/86400000)>0?`${Math.ceil((due-now)/86400000)} days`:"Estimated date passed";
+  const pct=Math.min(100,Math.round(days/280*100));$("progressText").textContent=pct+"%";$("progressBar").style.width=pct+"%";
+  $("trimester").textContent=weeks<14?"First trimester":weeks<28?"Second trimester":weeks<42?"Third trimester":"Past the estimated due date";
+  $("weekGuide").textContent=`You are approximately in week ${week}. Consider writing down questions for your prenatal appointments and following your clinician's recommendations.`;
+  let guide;
+  if(week<9)guide="Early development is underway. Symptoms and timing vary from person to person.";
+  else if(week<14)guide="Early pregnancy development continues. Your clinician can advise on suitable prenatal care and screening.";
+  else if(week<28)guide="Growth and movement continue through the second trimester. Follow your care team's advice about checkups and tests.";
+  else guide="Your baby continues growing as you approach the estimated due date. Ask your clinician about birth planning and when to seek care.";
+  $("developmentText").textContent=`Around week ${week}: ${guide} This is general information, not an assessment of your baby's health.`;
+}
+$("setupForm").addEventListener("submit",e=>{
+  e.preventDefault();const lmp=$("lmp").value;
+  if(!validLmp(lmp)){alert("Please choose a valid date that is today or earlier.");return}
+  saveProfile({name:$("name").value.trim(),lmp,notes:""});showApp();
+});
+document.querySelectorAll("[data-tab]").forEach(btn=>btn.addEventListener("click",()=>{
+  document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b===btn));
+  ["overview","development","notes","settings"].forEach(t=>$("tab-"+t).classList.toggle("hidden",t!==btn.dataset.tab));
+}));
+$("saveNotes").addEventListener("click",()=>{
+  const p=loadProfile();if(!p)return;p.notes=$("notes").value;saveProfile(p);$("notesStatus").textContent="Saved on this device.";
+});
+$("saveSettings").addEventListener("click",()=>{
+  const lmp=$("updateLmp").value;if(!validLmp(lmp)){alert("Please choose a valid past date.");return}
+  const p=loadProfile();p.name=$("updateName").value.trim();p.lmp=lmp;saveProfile(p);showApp();alert("Tracker updated.");
+});
+$("resetBtn").addEventListener("click",()=>{
+  if(confirm("Delete the profile and notes stored in this browser?")){localStorage.removeItem(PROFILE_KEY);$("appView").classList.add("hidden");$("resetBtn").classList.add("hidden");$("setupView").classList.remove("hidden");$("setupForm").reset();}
+});
+if("serviceWorker" in navigator && location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+const existing=loadProfile();if(existing && validLmp(existing.lmp))showApp();
+</script>
+</body>
+</html>
